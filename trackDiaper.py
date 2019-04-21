@@ -12,6 +12,8 @@
 import sys, json, requests, datetime, os
 import RPi.GPIO as GPIO
 
+sys.stdout.flush()
+
 # Initialize the Board
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BOARD)
@@ -32,7 +34,7 @@ while True:
 		slack_msg = { 'text': ":poop: Dirty! at %s" % (now) }
 		requests.post(webhook_url, data=json.dumps(slack_msg))
 		jsonOut = {'datetime': now, 'output': 'dirty' }
-		print json.dumps(jsonOut)
+		print(json.dumps(jsonOut))
 
 	# Button number 2
 	elif GPIO.input(8) == GPIO.HIGH:
@@ -40,12 +42,12 @@ while True:
 		slack_msg = { 'text': ":sweat_drops: Wet! at %s" % (now) }
 		requests.post(webhook_url, data=json.dumps(slack_msg))
 		jsonOut = {'datetime': now, 'output': 'wet'}
-		print json.dumps(jsonOut)
+		print(json.dumps(jsonOut))
 	# Button number 3
 	elif GPIO.input(16) == GPIO.HIGH:
 		now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 		slack_msg = { 'text': ":poop: :sweat_drops: Mixed! at %s" % (now) }	
 		requests.post(webhook_url, data=json.dumps(slack_msg))
 		jsonOut = {'datetime': now, 'output': 'mixed'}
-		print json.dumps(jsonOut)
+		print(json.dumps(jsonOut))
 # End

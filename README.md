@@ -20,7 +20,7 @@ This is a simple setup with a Raspberry Pi 3 and a python script to detect a but
 
 #### Execution
 ```bash
-python trackDiaper.py &
+python -u trackDiaper.py > diaper.log &
 ```
 
 #### Output
