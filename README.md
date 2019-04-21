@@ -9,6 +9,7 @@ This is a simple setup with a Raspberry Pi 3 and a python script to detect a but
 #### Requires:
 + Raspberry Pi 3
 + Python v3.x
++ Slack Channel and Webhook
 + 3 IM206 Tact switch
 + 3 220 Ohm resistors
 + wires
@@ -19,7 +20,7 @@ This is a simple setup with a Raspberry Pi 3 and a python script to detect a but
 
 #### Execution
 ```bash
-python diaper_tracker.py &
+python trackDiaper.py &
 ```
 
 #### Output
