@@ -12,6 +12,8 @@
 import sys, json, requests, datetime, os
 import RPi.GPIO as GPIO
 
+sys.stdout.flush()
+
 # Initialize the Board
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BOARD)
@@ -49,6 +51,7 @@ while True:
 			jsonOut = {'datetime': now, 'output': 'wet', 'error': 'true'}
 
 		print json.dumps(jsonOut)
+
 	# Button number 3
 	elif GPIO.input(16) == GPIO.HIGH:
 		now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
