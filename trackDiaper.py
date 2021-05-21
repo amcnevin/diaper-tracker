@@ -1,66 +1,92 @@
-#!/usr/bin/python
+#!/usr/bin/python3
+
 
 ###############################################################################
 # Diaper Tracker
 # Simple script to detect the pushing of a tactile switch/push button
 # Sends a message to Slack Channel with which button at what time
-# 
-# author: Tony McNevin, 2019-04-01
+# Release Notes:
+# v1: 2019-04-01 - initial script, while loop with if-elif stmts
+# v2: 2021-05-20 - added callbacks and events
+#
+# author: Tony McNevin
 #
 ###############################################################################
-
 import sys, json, requests, datetime, os
 import RPi.GPIO as GPIO
 
-sys.stdout.flush()
-
-# Initialize the Board
+# GPIO and Channel setup
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BOARD)
+WET_CHANNEL = 8
+DIRTY_CHANNEL = 10
+MIXED_CHANNEL = 16
+BOUNCE_TIME=1000
 
-# Establish which GPIO Pins as inputs
-GPIO.setup(10, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-GPIO.setup(8, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-GPIO.setup(16, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-
-# Grab Slack Webhook
-webhook_url = os.environ['SLACK_WH']
+# Slack Integration Webhook
+webhook_url = os.environ['DIAPER_TRACKER_HOOK_URL'] 
 
 
-while True:
-	# Button number 1
-	if GPIO.input(10) == GPIO.HIGH:
-		now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-		slack_msg = { 'text': ":poop: Dirty! at %s" % (now) }
-		try:
-			requests.post(webhook_url, data=json.dumps(slack_msg))
-			jsonOut = {'datetime': now, 'output': 'dirty'}
-		except:
-			jsonOut = {'datetime': now, 'output': 'dirty', 'error': 'true'}
+def track():
+    # intentional infinite loop
+    while True:
+        pass
 
-		print json.dumps(jsonOut)
 
-	# Button number 2
-	elif GPIO.input(8) == GPIO.HIGH:
-		now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-		slack_msg = { 'text': ":sweat_drops: Wet! at %s" % (now) }
-		try:
-			requests.post(webhook_url, data=json.dumps(slack_msg))
-			jsonOut = {'datetime': now, 'output': 'wet'}
-		except:
-			jsonOut = {'datetime': now, 'output': 'wet', 'error': 'true'}
+def get_datetime() -> str:
+    """
+    obtain the current datetime
+    :returns formatted datetime
+    """
+    return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-		print json.dumps(jsonOut)
+def send_msg(msg: str):
+    """
+    posts the provided message to the slack webhook
+    in the event of an exception, it logs to stdout
+    :param: msg to be displayed in slack message
+    """
+    try:
+        requests.post(webhook_url, data=json.dumps({'text': msg}))
+    except:
+        print(f"attempted to post msg [{msg}]")
 
-	# Button number 3
-	elif GPIO.input(16) == GPIO.HIGH:
-		now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-		slack_msg = { 'text': ":poop: :sweat_drops: Mixed! at %s" % (now) }	
-		try:
-			requests.post(webhook_url, data=json.dumps(slack_msg))
-			jsonOut = {'datetime': now, 'output': 'mixed'}
-		except:
-			jsonOut = {'datetime': now, 'output': 'mixed', 'error': 'true'}
 
-		print json.dumps(jsonOut)
-# End
+def dirty_callback(channel):
+    """
+    send the appropriate message when the dirty button is pushed
+    :param: channel that was activated 
+    """
+    send_msg(f":poop: Dirty! at {get_datetime()}")
+
+def wet_callback(channel):
+    """
+    send the appropriate message when the wet button is pushed
+    :param: channel that was activated
+    """
+    send_msg(f":sweat_drops: Wet! at {get_datetime()}")
+
+def mixed_callback(channel):
+    """
+    send the appropriate message when the mixed button is pushed
+    :param: channel that was activated
+    """
+    send_msg(f":poop: :sweat_drops: Mixed! at {get_datetime()}")
+
+
+# setup channels
+GPIO.setup(WET_CHANNEL, GPIO.IN, pull_up_down=GPIO.PUD_DOWN) 
+GPIO.setup(DIRTY_CHANNEL, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+GPIO.setup(MIXED_CHANNEL, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+
+
+# setup event detects and callbacks
+GPIO.add_event_detect(WET_CHANNEL, GPIO.RISING, callback=wet_callback, bouncetime=BOUNCE_TIME)
+GPIO.add_event_detect(DIRTY_CHANNEL, GPIO.RISING, callback=dirty_callback, bouncetime=BOUNCE_TIME)
+GPIO.add_event_detect(MIXED_CHANNEL, GPIO.RISING, callback=mixed_callback, bouncetime=BOUNCE_TIME)
+
+
+if __name__ == '__main__':
+    track()
+
+
